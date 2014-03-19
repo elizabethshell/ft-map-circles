@@ -19,36 +19,82 @@
 			src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAiMKXLOtqJlvcwdxCIQmtw-5KcyRbVOcM&sensor=true">
 		</script>
 		<script type="text/javascript">
+
+			// Start our process
 			$(document).ready(function() {
 				fn.getData();
 			});
 
+			// Our object
 			var fn = {
 
+				// Declaration of array to hold our processed data
+				citySnowTotals: [],
+
+				// Brings our data to the page from the CSV
 				getData: function() {
-					d3.csv("noaa.csv")
-						.row(function(d) {
-							return { city: d.city, state: d.state, avg: d.average, current: d.current, percent: d.percent };
-						})
+					d3.csv("noaasnowtotals.csv")
 						.get(function(error, rows) {
 							fn.processData(rows);
 						})
 				},
 
-				processData: function(data) {
+				// Parse to ints/floats and push onto citySnowTotals array
+				processData: function(d) {
 
-					fn.createMap();
+					for (var i = 0; i < d.length; i++) {
+						fn.citySnowTotals[i] = {
+							"city": d[i].city,
+							"state": d[i].state,
+							"avg": parseFloat(d[i].average),
+							"current": parseFloat(d[i].current),
+							"pct": parseInt(d[i].percent),
+							"lat": d[i].lat,
+							"long": d[i].long
+						}
+					}
+
+					fn.createMap("map-canvas");
 				},
 
-				createMap: function() {
-					var map = new google.maps.Map(document.getElementById("map-canvas"), {
-						center: new google.maps.LatLng(-34.397, 150.644),
-						zoom: 8,
+				// Create the map with the given mapOptions
+				createMap: function(div) {
+					var map = new google.maps.Map(document.getElementById(div), {
+						center: new google.maps.LatLng(39.50,-98.35),
+						mapTypeId: google.maps.MapTypeId.MAP,
+						zoom: 4
 					})
+					fn.addCirclesToMap(map);
+				},
+
+				// Loop through citySnowTotals and create circles
+				addCirclesToMap: function(map) {
+
+					for (var i = 0; i < fn.citySnowTotals.length; i++) {
+
+						var latLng = new google.maps.LatLng(fn.citySnowTotals[i].lat, fn.citySnowTotals[i].long);
+
+						var circleOptions = {
+				            strokeColor: "#000000",
+				            strokeOpacity: 0,
+				            strokeWeight: 2,
+				            fillColor: "#37949b",
+				            fillOpacity: 0.7,
+				            map: map,
+				            clickable: true,
+				            center: latLng,
+				            radius: fn.citySnowTotals[i].pct * 1000
+						};
+
+						var cityCircles = new google.maps.Circle(circleOptions);
+						cityCircles.setMap(map);
+
+					}
 				}
 
 			}
 		</script>
+
 		<div id="map-canvas"></div>
 	</body>
 </html>
